@@ -52,6 +52,23 @@ go build -o asare.exe ./cmd/asare
 ./asare.exe -recover
 ```
 
+## Chaos CLI (crash-injection tester)
+
+The distribution trojan horse: prove to a developer that their agent corrupts state, then show the fix.
+
+```bash
+go build -o chaos.exe ./cmd/chaos
+
+# Run a workflow and force-crash before step 2 → orphan state left behind
+./chaos.exe run --crash-at 2
+
+# Detect unfinished executions in the WAL and roll them all back
+./chaos.exe recover
+
+# Show the step-by-step WAL history of any execution
+./chaos.exe report --exec exec_chaos_1786287107152
+```
+
 ## The inverse-action registry
 
 Compensation rules are declarative — no code changes to add a new integration:
@@ -74,6 +91,7 @@ rules:
 
 ```
 cmd/asare/            demo CLI (crash / recover modes)
+cmd/chaos/            crash-injection tester CLI (run / recover / report)
 pkg/ledger/           write-ahead log (PENDING → COMPLETED → ROLLED_BACK)
 pkg/compensator/      LIFO rollback execution
 pkg/agent/            agent wrapper that logs steps to the WAL
@@ -87,8 +105,8 @@ inverse_registry.yaml sample compensation rules
 - [x] WAL ledger with durable persistence
 - [x] LIFO compensation across process restarts (verified crash-recovery)
 - [x] Declarative inverse-action registry (YAML)
+- [x] Chaos CLI (automated crash-injection tester)
 - [ ] Real adapters: Stripe, HubSpot, Okta, GitHub
-- [ ] Agent Chaos CLI (automated crash-injection tester)
 - [ ] Hosted control plane: transaction history, audit logs, approval gates
 
 ## License

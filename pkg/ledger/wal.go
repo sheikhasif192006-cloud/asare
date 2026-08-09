@@ -157,3 +157,17 @@ func (w *WAL) GetCompletedStepsForExecution(execID string) []StepLog {
 	}
 	return completedSteps
 }
+
+// StepsForExecution returns all steps for an execution in log order (for reporting).
+func (w *WAL) StepsForExecution(execID string) []StepLog {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	var steps []StepLog
+	for _, step := range w.Steps {
+		if step.ExecutionID == execID {
+			steps = append(steps, step)
+		}
+	}
+	return steps
+}
