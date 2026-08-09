@@ -125,7 +125,7 @@ func main() {
 	_, err = asareAgent.ExecuteStep(
 		2,
 		"HubSpot Contact Provisioning",
-		ledger.Action{Method: "POST", URL: baseURL + "/mock/hubspot/contact", Body: map[string]any{"email": "sheikh@voltstudio.in"}},
+		ledger.Action{Method: "POST", URL: baseURL + "/mock/hubspot/contact", Body: map[string]any{"email": "client@example.com"}},
 		lookupInverse("POST", baseURL+"/mock/hubspot/contact"),
 	)
 	if err != nil {
