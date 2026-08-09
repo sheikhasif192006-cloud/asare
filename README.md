@@ -69,6 +69,17 @@ go build -o chaos.exe ./cmd/chaos
 ./chaos.exe report --exec exec_chaos_1786287107152
 ```
 
+## Transparent proxy mode (production sidecar)
+
+The demo CLIs above call ASARE's SDK directly. The real deployment pattern is a **transparent HTTP proxy**: point your agent at the proxy URL instead of the real API base URL — zero SDK changes. Every write (POST/PUT/PATCH/DELETE) is logged to the WAL before forwarding; if an upstream call fails mid-workflow, the proxy auto-rolls-back every completed step.
+
+```bash
+go build -o proxydemo.exe ./cmd/proxydemo
+./proxydemo.exe
+```
+
+Demo flow: agent charges Stripe → creates HubSpot contact → third call fails (simulated upstream outage) → proxy automatically refunds the charge and deletes the contact. WAL shows `ROLLED_BACK` / `FAILED` states.
+
 ## The inverse-action registry
 
 Compensation rules are declarative — no code changes to add a new integration:
@@ -92,10 +103,12 @@ rules:
 ```
 cmd/asare/            demo CLI (crash / recover modes)
 cmd/chaos/            crash-injection tester CLI (run / recover / report)
+cmd/proxydemo/        transparent-proxy demo (zero SDK change pattern)
 pkg/ledger/           write-ahead log (PENDING → COMPLETED → ROLLED_BACK)
 pkg/compensator/      LIFO rollback execution
 pkg/agent/            agent wrapper that logs steps to the WAL
 pkg/registry/         YAML inverse-action registry
+pkg/proxy/            transparent HTTP sidecar proxy
 pkg/mockservices/     persistent mock Stripe/HubSpot for demo & tests
 inverse_registry.yaml sample compensation rules
 ```
@@ -106,6 +119,7 @@ inverse_registry.yaml sample compensation rules
 - [x] LIFO compensation across process restarts (verified crash-recovery)
 - [x] Declarative inverse-action registry (YAML)
 - [x] Chaos CLI (automated crash-injection tester)
+- [x] Transparent proxy sidecar (zero SDK change for agents)
 - [ ] Real adapters: Stripe, HubSpot, Okta, GitHub
 - [ ] Hosted control plane: transaction history, audit logs, approval gates
 

@@ -42,6 +42,17 @@ func (db *MockDB) load() {
 	_ = json.Unmarshal(data, &db.State)
 }
 
+// failIfInjected checks the X-Fail-Step header: when present, the mock
+// returns 500 to simulate an upstream outage mid-workflow.
+func failIfInjected(w http.ResponseWriter, r *http.Request) bool {
+	if r.Header.Get("X-Fail-Step") != "" {
+		log.Printf("[MOCK] FAILURE INJECTED: %s %s -> 500", r.Method, r.URL.Path)
+		http.Error(w, `{"error":"simulated upstream outage"}`, http.StatusInternalServerError)
+		return true
+	}
+	return false
+}
+
 func (db *MockDB) saveLocked() {
 	data, err := json.MarshalIndent(db.State, "", "  ")
 	if err != nil {
@@ -57,6 +68,9 @@ func SetupMockServer(db *MockDB) *http.Server {
 
 	// Stripe Endpoints
 	mux.HandleFunc("/mock/stripe/charge", func(w http.ResponseWriter, r *http.Request) {
+		if failIfInjected(w, r) {
+			return
+		}
 		var req map[string]any
 		json.NewDecoder(r.Body).Decode(&req)
 		chargeID := id("ch")
@@ -94,6 +108,9 @@ func SetupMockServer(db *MockDB) *http.Server {
 	mux.HandleFunc("/mock/hubspot/contact", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
+			if failIfInjected(w, r) {
+				return
+			}
 			var req map[string]any
 			json.NewDecoder(r.Body).Decode(&req)
 			contactID := id("cnt")
