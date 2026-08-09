@@ -1,0 +1,13 @@
+# Build artifacts
+asare.exe
+asare_poc.exe
+*.exe
+
+# Runtime state (generated during demo/chaos tests)
+asare_wal.json
+mock_db.json
+
+# IDE
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,18 @@
+rules:
+  - action:
+      method: POST
+      path: /mock/stripe/charge
+    inverse:
+      method: POST
+      path: /mock/stripe/refund
+      body:
+        charge_id: "$response.charge_id"
+
+  - action:
+      method: POST
+      path: /mock/hubspot/contact
+    inverse:
+      method: DELETE
+      path: /mock/hubspot/contact
+      body:
+        contact_id: "$response.contact_id"
